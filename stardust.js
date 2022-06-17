@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import { processRule } from './utils/process_rule.js';
 import { processTransactions } from './utils/process_transaction.js';
 import { processSubReady } from './utils/process_sub_ready.js';
