@@ -17,7 +17,7 @@ export const STARDUST = {
   subReadyChan: csp.chan(),
 
   eventsBufferChan: csp.chan(),
-  txBufferingInMs: 500,
+  txBufferingInMs: 10,
 
   activeRules: {},
   activeQueries: new Map(),
@@ -134,7 +134,6 @@ csp.go(function*() {
 
 export const stardustCollection = (collection, name) => {
   registerCollection(collection, name, STARDUST);
-
   collection.find({}).observe({
     added(doc) {
       csp.putAsync(STARDUST.eventsBufferChan, {
@@ -161,4 +160,3 @@ export const stardustCollection = (collection, name) => {
     }
   });
 };
-
