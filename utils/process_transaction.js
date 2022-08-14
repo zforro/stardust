@@ -43,15 +43,6 @@ export const processTransactions = (txs, ctx) => {
 };
 
 
-export const processTransaction2 = (txs, ctx) => {
-  console.debug("STARDUST - PROCESS TX |> processing ", txs);
-  return (txs.op === 'added')   ? processAddedTransaction(txs, ctx)
-    : (txs.op === 'changed') ? processChangedTransaction(txs, ctx)
-    : (txs.op === 'removed') ? processRemovedTransaction(txs, ctx)
-    : new Error(`processTransaction illegal txs ${txs}`);
-};
-
-
 const processAddedTransaction = (tx, {
   activeQueries, activeSubs, activeRules, eventsBufferChan
 }) => {

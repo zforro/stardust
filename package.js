@@ -1,6 +1,6 @@
 Package.describe({
   name: 'zforro:stardust',
-  version: '0.0.2',
+  version: '0.0.3',
   summary: 'UI state management for Meteor',
   git: 'https://github.com/zforro/stardust.git',
   documentation: 'README.md'
@@ -8,6 +8,7 @@ Package.describe({
 
 Npm.depends({
   lodash: '4.17.15',
+  immutable: '4.1.0'
 });
 
 Package.onUse(function(api) {

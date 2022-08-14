@@ -24,9 +24,9 @@ export const processRule = (value, ctx) => {
 
 
 const processAddedRule = (added, {
-  activeQueries, activeSubs, activeRules, eventsBufferChan
+  activeQueries, activeSubs, activeRules, eventsBufferChan, verboseRules
 }) => {
-  const activeRule = activateRule(added.rule, activeRules);
+  const activeRule = activateRule(added.rule, activeRules, verboseRules);
   const reason = {
     _id: Random.id(),
     category: 'rule',
@@ -100,16 +100,17 @@ const processRemovedRule = (removed, {
 
 //------------------------------------------------------------------------------
 
-const activateRule = (rule, activeRules) => {
+const activateRule = (rule, activeRules, verboseRules) => {
   const name = rule.name ?? Random.id();
+  const vrbs = verboseRules;
 
   const expandedRule = _({
     name,
-    queries: _.mapValues(rule.queries, (q) => expandExpr(q)),
-    params: _.mapValues(rule.params, (p) => expandExpr(p)),
-    mount: expandExpr(rule.mount),
-    subs: _.mapValues(rule.subs, (s) => expandExpr(s)),
-    appStateFragments: _.map(rule.appStateFragments, (f) => expandExpr(f))
+    queries: _.mapValues(rule.queries, (q) => expandExpr(q, vrbs)),
+    params: _.mapValues(rule.params, (p) => expandExpr(p, vrbs)),
+    mount: expandExpr(rule.mount, vrbs),
+    subs: _.mapValues(rule.subs, (s) => expandExpr(s, vrbs)),
+    appStateFragments: _.map(rule.appStateFragments, (f) => expandExpr(f, vrbs))
   }).omitBy(_.isUndefined).value();
 
   const activeRule = {
@@ -171,10 +172,41 @@ const activateRule = (rule, activeRules) => {
 };
 
 
-const expandExpr = (expr) => {
-  return _.isFunction(expr)                     ? [expr, []]
-    : ((expr?.length == 2) && _.isArray(expr[1])) ? [expr[0], expr[1]]
-    :                                               [() => expr, []];
+const expandExpr = (expr, verboseRules) => {
+  if (_.isFunction(expr)) {
+    if (verboseRules) {
+      return [expr, []];
+    }
+    else {
+      const args = extractFnArgFromSource(expr.toString());
+      return [expr, args];
+    }
+  }
+  else if ((expr?.length == 2) && _.isArray(expr[1])) {
+    return [expr[0], expr[1]];
+  }
+  else {
+    return [() => expr, []];
+  }
+  // return _.isFunction(expr)                       ? [expr, []]
+  //   : ((expr?.length == 2) && _.isArray(expr[1])) ? [expr[0], expr[1]]
+  //   :                                               [() => expr, []];
+};
+
+
+const extractFnArgFromSource = (fnSource) => {
+  const arrowFunctionRegexp = /\(\{(.+)\}\)\s+=>/;
+  const originalFunctionRegexp = /function\(\{(.+)\}\)/;
+  const matched = fnSource.match(arrowFunctionRegexp) ||
+        fnSource.match(originalFunctionRegexp);
+  if (matched) {
+    return matched[1]
+      .split(',')
+      .map((v) => v.trim());
+  }
+  else {
+    return [];
+  }
 };
 
 

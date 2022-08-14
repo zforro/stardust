@@ -1,5 +1,8 @@
 import _ from 'lodash';
 
+import { mergeFragmentsIntoAppState } from './utils/app_state.js';
+import Immutable from 'immutable';
+
 import { processRule } from './utils/process_rule.js';
 import { processTransactions } from './utils/process_transaction.js';
 import { processSubReady } from './utils/process_sub_ready.js';
@@ -21,7 +24,27 @@ export const STARDUST = {
 
   activeRules: {},
   activeQueries: new Map(),
-  activeSubs: new Map()
+  activeSubs: new Map(),
+
+  appState: undefined,
+  verboseRules: false
+};
+
+
+export const onAppStateChange = (callback) => {
+  const appStateFragmentsChan = createAppStateFragmentsChan();
+
+  let appStateBefore = Immutable.Map({});
+
+  csp.go(function*() {
+    while(true) {
+      const {fragments, reason} = yield csp.take(appStateFragmentsChan);
+      STARDUST.appState = mergeFragmentsIntoAppState(fragments, appStateBefore);
+      appStateBefore = STARDUST.appState;
+
+      callback(STARDUST.appState);
+    }
+  });
 };
 
 
@@ -48,7 +71,8 @@ export const createAppStateFragmentsChan = () => {
         activeRules: STARDUST.activeRules,
         activeQueries: STARDUST.activeQueries,
         activeSubs: STARDUST.activeSubs,
-        eventsBufferChan: STARDUST.eventsBufferChan
+        eventsBufferChan: STARDUST.eventsBufferChan,
+        verboseRules: STARDUST.verboseRules
       };
 
       const {fragments, reason} =
