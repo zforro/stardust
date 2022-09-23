@@ -3,6 +3,10 @@ import csp from '../js-csp.es5.min.js';
 
 import { Random } from 'meteor/random';
 
+import { STARDUST } from '../config.js';
+
+import { starLog } from './logging.js';
+
 import {
   getQuery,
   registerQuery,
@@ -21,6 +25,8 @@ import {
 
 //------------------------------------------------------------------------------
 
+const isLogging = STARDUST.logs.active;
+
 /*
  * Updating Rule
  */
@@ -30,6 +36,12 @@ export const updateActiveRules = (varsToUpdateByRule, {
 }) => {
   let fragments = {};
   let ctx = {activeQueries, activeSubs, activeRules, eventsBufferChan};
+
+  if (isLogging) {
+    starLog('updateActiveRules', `<<<< updating active rules`, {
+      varToUpdateByRule: _.cloneDeep(varsToUpdateByRule),
+    });
+  }
 
   for (const [ruleName,
               {varNames, reasons}] of Object.entries(varsToUpdateByRule)) {
@@ -57,6 +69,15 @@ export const updateActiveRule = (activeRule, varName, {
 
   const mountDependsOnVarName = activeRule.sortedVarsUntilMount.includes(
     varName);
+
+  if (isLogging) {
+    starLog('updateActiveRule', `<<<<< updating active rule`, {
+      activeRule: _.cloneDeep(activeRule),
+      ruleName: activeRule.name,
+      varName: varName,
+      ctx: _.cloneDeep(ctx),
+    });
+  }
 
   if (mountDependsOnVarName) {
     const fromVarNameUntilMount = sliceFrom(activeRule.sortedVarsUntilMount,
@@ -143,6 +164,15 @@ const updateVar = (activeRule, varName, {
   const activeRuleVar = activeRule.vars[varName];
   const {category, value, valueChangeReason} = activeRuleVar;
   const ctx = _.mapValues(activeRule.vars, (v) => v.value);
+
+  if (isLogging) {
+    starLog('updateVar', `<<<<<< updating var ${varName}`, {
+      activeRuleVar: _.cloneDeep(activeRuleVar),
+      ruleName: activeRule.name,
+      varName: varName,
+      ctx: _.cloneDeep(ctx),
+    });
+  }
 
   if (category === 'mount') {
     const curMount = value;
@@ -263,6 +293,16 @@ const updateVar = (activeRule, varName, {
       activeRuleVar.valueChangeReason = reason;
       activeRule._cache[varName] = flatNewFragments;
     }
+  }
+
+  if (isLogging) {
+    starLog('updateVar', `>>>>>> updated var ${varName}`, {
+      activeRuleVar: _.cloneDeep(activeRuleVar),
+      ruleName: activeRule.name,
+      varName: varName,
+      fragments,
+      ctx: _.cloneDeep(ctx),
+    });
   }
 
   return fragments;

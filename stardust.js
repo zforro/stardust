@@ -1,5 +1,7 @@
 import _ from 'lodash';
 
+import { STARDUST } from './config.js';
+
 import { mergeFragmentsIntoAppState } from './utils/app_state.js';
 import Immutable from 'immutable';
 
@@ -7,28 +9,14 @@ import { processRule } from './utils/process_rule.js';
 import { processTransactions } from './utils/process_transaction.js';
 import { processSubReady } from './utils/process_sub_ready.js';
 import { registerCollection } from './utils/stardust_collection.js';
+import { starLog } from './utils/logging.js';
 
 import csp from './js-csp.es5.min.js';
 
 //------------------------------------------------------------------------------
 
-export const STARDUST = {
-  collections: {},
-
-  ruleChan: csp.chan(),
-  txChan: csp.chan(),
-  subReadyChan: csp.chan(),
-
-  eventsBufferChan: csp.chan(),
-  txBufferingInMs: 10,
-
-  activeRules: {},
-  activeQueries: new Map(),
-  activeSubs: new Map(),
-
-  appState: undefined,
-  verboseRules: false
-};
+export {STARDUST};
+const isLogging = STARDUST.logs.active;
 
 
 export const onAppStateChange = (callback) => {
@@ -64,8 +52,14 @@ export const createAppStateFragmentsChan = () => {
             : (channel === STARDUST.txChan) ? 'txChan'
             : (channel === STARDUST.subReadyChan) ? 'subReadyChan'
             : 'unknownChan (will lead to error)';
-      console.debug(`STARDUST - ROOT CHANNELS |> ${channelName}` +
-          " received: ", value);
+
+      if (isLogging) {
+        starLog('createAppStateFragmentsChan',
+          `< new value to process from ${channelName}`, {
+            value,
+            channel: channelName,
+          });
+      }
 
       const ctx = {
         activeRules: STARDUST.activeRules,
@@ -79,10 +73,17 @@ export const createAppStateFragmentsChan = () => {
               (channel === STARDUST.ruleChan) ? processRule(value, ctx)
             : (channel === STARDUST.txChan) ? processTransactions(value, ctx)
             : (channel === STARDUST.subReadyChan) ? processSubReady(value, ctx) 
-            : new Error (`initAppStateMachine wrong channel: ${channel}`);
+            : new Error (`createAppStateFragmentsChan wrong channel: ${channel}`);
 
-      console.debug(`STARDUST - ROOT CHANNELS |> value from ${channelName}` +
-          " generated fragments/reason", fragments, reason);
+      if (isLogging) {
+        starLog('createAppStateFragmentsChan',
+          `> processed value from ${channelName}`, {
+            value,
+            channel: channelName,
+            fragments,
+            reason,
+          });
+      }
 
       if (!_.isEmpty(fragments)) {
         csp.putAsync(out, {fragments, reason});

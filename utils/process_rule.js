@@ -2,6 +2,10 @@ import _ from 'lodash';
 
 import { Random } from 'meteor/random';
 
+import { STARDUST } from '../config.js';
+
+import { starLog } from './logging.js';
+
 import {
   updateActiveRule,
   unregisterAllQueriesFromRule,
@@ -12,9 +16,19 @@ import {
 
 //------------------------------------------------------------------------------
 
+const isLogging = STARDUST.logs.active;
+
+
 export const processRule = (value, ctx) => {
+
   console.debug("STARDUST - PROCESS RULE |> processing ", value);
   const {op} = value;
+
+  if (isLogging) {
+    starLog('processRule', `<< processing ${op} rule`, {
+      value,
+    });
+  }
 
   return (op === 'add')    ? processAddedRule(value, ctx)
        : (op === 'change') ? processChangedRule(value, ctx)
@@ -33,6 +47,12 @@ const processAddedRule = (added, {
     op: 'added',
     content: {ruleName: activeRule.name}
   };
+
+  if (isLogging) {
+    starLog('processAddedRule', `<<< processing added rule`, {
+      activeRule: _.cloneDeep(activeRule),
+    });
+  }
 
   const fragments = updateActiveRule(activeRule,
     _.first(activeRule.sortedVarsUntilMount),
@@ -55,6 +75,12 @@ const processChangedRule = (changed, {
     op: 'changed',
     content: {ruleName}
   };
+
+  if (isLogging) {
+    starLog('processChangedRule', `<<< processing changed rule`, {
+      changedRule: _.cloneDeep(changed),
+    });
+  }
 
   const fragmentsFromRemoval = processRemovedRule({ruleName}, {
     activeQueries, activeSubs, activeRules, reason
@@ -82,6 +108,12 @@ const processRemovedRule = (removed, {
     op: 'removed',
     content: {ruleName: removed.ruleName}
   };
+
+  if (isLogging) {
+    starLog('processRemovedRule', `<<< processing removed rule`, {
+      removedRule: _.cloneDeep(activeRule),
+    });
+  }
 
   unregisterAllQueriesFromRule(activeRule, activeQueries);
   unregisterAllSubsFromRule(activeRule, activeSubs);
