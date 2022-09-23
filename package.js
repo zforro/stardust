@@ -1,6 +1,6 @@
 Package.describe({
   name: 'zforro:stardust',
-  version: '0.0.4',
+  version: '0.0.5',
   summary: 'UI state management for Meteor',
   git: 'https://github.com/zforro/stardust.git',
   documentation: 'README.md'
