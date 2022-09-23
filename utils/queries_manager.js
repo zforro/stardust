@@ -31,7 +31,7 @@ export const registerQuery = (activeQueries, query, client) => {
   }
   else {
     const {clients, data} = activeQueries.get(queryAsString);
-    if (!_.find(clients, client)) {
+    if (!_.find(clients, el => _.isEqual(el ,client))) {
       clients.push(client);
     }
     return data;
@@ -76,8 +76,9 @@ export const unregisterQuery = (activeQueries, query, client) => {
 
   const activeQuery = activeQueries.get(queryAsString);
   const clientsAfterUnregister = _.differenceWith(
-    activeQuery.clients, client, _.isEqual
+    activeQuery.clients, [client], _.isEqual
   );
+
   if (clientsAfterUnregister.length) {
     activeQuery.clients = clientsAfterUnregister;
   }
