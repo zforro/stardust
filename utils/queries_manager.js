@@ -61,7 +61,7 @@ export const executeQuery = ([collection, method, selector, fields]) => {
     collection.find(clonedSelector, {
       fields: fields ?? {}, reactive: false
     }).forEach((doc) => {
-      data.set(doc._id, doc);
+      addDoc(data, doc);
     });
     return data;
   }
@@ -85,6 +85,25 @@ export const unregisterQuery = (activeQueries, query, client) => {
   else {
     activeQueries.delete(queryAsString);
   }
+};
+
+
+export const addDoc = (docs, doc) => {
+  // Javascript Maps behave unexpectedly with object keys: object keys are only
+  // equal if they are the same object in memory.
+  docs.set(doc._id?._str || doc._id, doc);
+};
+
+
+export const changeDoc = (docs, doc) => {
+  addDoc(docs, doc);
+};
+
+
+export const removeDoc = (docs, doc) => {
+  // Javascript Maps behave unexpectedly with object keys: object keys are only
+  // equal if they are the same object in memory.
+  docs.delete(doc._id?._str || doc._id);
 };
 
 

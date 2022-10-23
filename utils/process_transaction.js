@@ -7,7 +7,10 @@ import {
 } from './process_helpers.js';
 
 import {
-  executeQuery
+  executeQuery,
+  addDoc,
+  changeDoc,
+  removeDoc,
 } from './queries_manager.js';
 
 import {
@@ -60,7 +63,7 @@ const processAddedTransaction = (tx, {
       const newDoc = applyFieldRestrictions(doc, fields);
 
       if (op === 'find') {
-        data.set(doc._id, newDoc);
+        addDoc(data, doc);
         registerForUpdate(varsToUpdateByRule, content.clients, tx);
       }
       else if (op === 'findOne' && !data) {
@@ -100,7 +103,7 @@ const processChangedTransaction = (tx, {
       else if (!matched && docBefore) {
         if (op === 'find') {
           // doc was part of the result set. Not anymore. Remove.
-          data.delete(doc._id);
+          removeDoc(data, doc);
           registerForUpdate(varsToUpdateByRule, content.clients, tx);
         }
         else if (op === 'findOne' && _.isEqual(doc._id, docBefore._id)) {
@@ -117,7 +120,7 @@ const processChangedTransaction = (tx, {
         // doc is now part of the result set. Wasn't before. Add it.
         const docAfter =  applyFieldRestrictions(doc, fields);
         if (op === 'find') {
-          data.set(doc._id, docAfter);
+          addDoc(data, docAfter);
         }
         else {
           activeQuery.data = docAfter;
@@ -129,7 +132,7 @@ const processChangedTransaction = (tx, {
         // doc has changed but is still part of the result set. Replace.
         const docAfter = applyFieldRestrictions(doc, fields);
         if (op === 'find') {
-          data.set(doc._id, docAfter);
+          changeDoc(data, docAfter);
           registerForUpdate(varsToUpdateByRule, content.clients, tx);
         }
         else if (op === 'findOne' && _.isEqual(doc._id, docBefore._id)) {
@@ -158,7 +161,7 @@ const processRemovedTransaction = (tx, {
       const {data} = activeQuery;
 
       if (op === 'find' && data.has(doc._id)) {
-        data.delete(doc._id);
+        removeDoc(data, doc);
         registerForUpdate(varsToUpdateByRule, content.clients, tx);
       }
       else if (_.isEqual(doc._id, data?._id)) {

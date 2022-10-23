@@ -10,7 +10,7 @@ export const STARDUST = {
   subReadyChan: csp.chan(),
 
   eventsBufferChan: csp.chan(),
-  txBufferingInMs: 10,
+  txBufferingInMs: 8,
 
   activeRules: {},
   activeQueries: new Map(),
